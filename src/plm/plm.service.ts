@@ -5,7 +5,8 @@ import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { Project } from './project.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
+import { ProjectsFilter } from './input/param.plm';
 
 @Injectable()
 export class PlmService {
@@ -49,12 +50,34 @@ export class PlmService {
     this.repository.save(projects);
   }
 
-  getAll() {
+  getOrderByCreatedAt() {
     return this.repository.find({
       order: {
         createdAt: 'DESC',
       },
       take: 50,
     });
+  }
+
+  getWithParams(filter: ProjectsFilter) {
+    this.logger.log('Hit, getWithParams()');
+    const prodCode = !!filter.prodCode ? filter.prodCode : '';
+    const projectCode = !!filter.projectCode ? filter.projectCode : '';
+    const projectName = !!filter.projectName ? filter.projectName : '';
+    return this.repository.find({
+      where: {
+        prodCode: Like(`%${prodCode}%`),
+        projectCode: Like(`%${projectCode}%`),
+        projectName: Like(`%${projectName}%`),
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+      take: 50,
+    });
+  }
+
+  getById(id: string) {
+    return this.repository.findOneBy({ id });
   }
 }

@@ -26,7 +26,6 @@ export class Project {
   @Column({ length: 10 })
   projectType: string;
   @Column({ length: 50 })
-  @Index()
   prodGroupCode: string;
   @Column({ length: 50 })
   @Index()
@@ -38,6 +37,7 @@ export class Project {
   @Column({ length: 20 })
   devPlNameEn: string;
   @CreateDateColumn()
+  @Index()
   createdAt: Date;
   @UpdateDateColumn()
   updatedAt: Date;

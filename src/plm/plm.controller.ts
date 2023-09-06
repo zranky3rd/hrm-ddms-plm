@@ -1,4 +1,13 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ProjectsFilter } from './input/param.plm';
 import { PlmService } from './plm.service';
 
 @Controller('plm')
@@ -7,8 +16,19 @@ export class PlmController {
   constructor(private readonly service: PlmService) {}
 
   @Get('projects')
-  getProjects() {
-    return this.service.getAll();
+  @UseInterceptors(ClassSerializerInterceptor)
+  read(@Query() params: ProjectsFilter) {
+    this.logger.debug([params]);
+    if (Object.keys(params).length === 0)
+      return this.service.getOrderByCreatedAt();
+
+    return this.service.getWithParams(params);
+  }
+
+  @Get('projects/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
+  readWithId(@Param('id') id: string) {
+    return this.service.getById(id);
   }
 
   @Get('fake-projects')
@@ -16,28 +36,13 @@ export class PlmController {
     this.logger.log('Hit, getProjects()');
     return [
       {
-        id: 'id',
-        projectCode: 'projectCode',
-        projectName: 'projectName',
-        projectState: 'state2sf',
-        projectType: 'type',
-        prodGroupCode: 'group',
-        prodCode: 'prod',
-        devType: 'devtype',
-        devPlNameKo: '한국어',
-        devPlNameEn: 'english',
-        summary: 'dummy',
-        devPlId: 'devPlId',
-        etc: 'etc',
-      },
-      {
         id: 'id' + Math.floor(Math.random() * 1000000),
-        projectCode: 'projectCode',
+        projectCode: 'prCode' + Math.floor(Math.random() * 1000000000),
         projectName: 'projectUpdate',
         projectState: 'state',
         projectType: 'type',
         prodGroupCode: 'group',
-        prodCode: 'prod',
+        prodCode: 'prod' + Math.floor(Math.random() * 10),
         devType: 'devtype',
         devPlNameKo: '한국어',
         devPlNameEn: 'english',
@@ -54,7 +59,10 @@ export class PlmController {
     try {
       const { data } = await this.service.fetchProjects();
       this.logger.debug(`data.length: ${data.length}`);
-      return this.service.save(data);
+      this.service.save(data);
+      return {
+        message: `data.length: ${data.length}`,
+      };
     } catch (err) {
       this.logger.error(err);
       return err;
